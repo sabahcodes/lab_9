@@ -1,0 +1,59 @@
+LAB 9 NOTES - Linear and Polynomial Regression, Cross-Validation, Ridge Grid Search
+CS-402L Data Science Lab
+
+==================================================================
+TASK 1 - Estimate Housing Prices Near Transit
+==================================================================
+Results (414 transactions):
+  Slope     = -0.7262 price units per 100 m
+  Intercept = 45.8514 price units
+  Prediction at 500 m = 42.22 price units (10,000 NTD per ping)
+
+Explanation:
+The fitted line has a negative slope of about -0.73, so house price per unit area
+falls as the distance to the nearest MRT station grows. Each extra 100 m lowers the
+predicted price by about 0.73 units, or roughly 7,300 New Taiwan dollars per ping.
+The intercept of 45.85 is the predicted price for a house right at the station.
+At 500 m the model predicts 45.85 - 5 x 0.7262 = 42.22 units. The points are widely
+spread around the line, so distance alone does not explain all price variation.
+
+==================================================================
+TASK 2 - Compare Models for Yacht Resistance
+==================================================================
+Results (308 experiments, 5-fold CV, random_state=42):
+  Linear    fold RMSEs: 8.16, 10.57, 9.84, 8.38, 7.78   Mean = 8.95
+  Quadratic fold RMSEs: 3.93, 4.59, 4.45, 4.49, 3.50    Mean = 4.19
+  Selected model: Quadratic (degree-2 polynomial)
+
+Explanation:
+The quadratic model is better. Its mean CV RMSE of 4.19 is less than half the linear
+model's 8.95, and it wins in every one of the five folds, so the improvement is
+consistent. Resistance rises sharply and non-linearly with Froude number (speed), so a
+straight line cannot follow the curve, while the squared term lets the fit bend. Both
+models used the same folds, so the comparison is fair. The split is row-based, so
+experiments from the same hull can fall in both training and validation folds, which
+may make the error estimates slightly optimistic.
+
+==================================================================
+TASK 3 - Tune a Concrete Strength Model
+==================================================================
+Results:
+  After removing duplicates: 804 training rows, 201 test rows
+  Linear baseline mean CV RMSE = 10.20 MPa
+  Top 3 settings (mean CV RMSE):
+    1. degree=3, alpha=0.1   -> 6.09 MPa
+    2. degree=3, alpha=0.01  -> 6.16 MPa
+    3. degree=3, alpha=1     -> 6.27 MPa
+  Refitted winner on test set: RMSE = 6.52 MPa, MAE = 4.67 MPa
+
+Explanation:
+The tuned model (degree 3, alpha 0.1) cuts mean CV RMSE from 10.20 MPa to 6.09 MPa,
+an improvement of about 40%. Concrete strength depends on ingredients and curing age
+in a non-linear way, so polynomial terms capture patterns a plain linear model misses,
+and Ridge keeps the many coefficients from overfitting. The test RMSE of 6.52 MPa is
+close to the CV RMSE of 6.09 MPa, so the model generalises well to unseen data.
+An example degree-2 interaction term is Cement x Water, which lets the effect of
+cement on strength depend on how much water is used. Scaling belongs inside the
+pipeline because polynomial features have very different ranges and Ridge penalises
+coefficient size. Inside the pipeline the scaler is fitted only on each training
+fold, so no information from the validation fold leaks into training.
